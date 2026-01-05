@@ -5,7 +5,7 @@ import {
   Lock, BarChart3, Search, X, TrendingUp, AlertCircle, 
   CheckCircle2, Settings, UserPlus, Trash2, Calendar, User,
   ChevronLeft, PieChart, ArrowUpRight, Lightbulb, Medal, Key,
-  Edit2, Save, Download, AlertTriangle, PenTool, Printer, FileText
+  Edit2, Save, Download, AlertTriangle, PenTool, Printer, FileText, Check, MousePointerClick
 } from 'lucide-react';
 
 // --- CONFIGURATION & DUMMY DATA ---
@@ -123,6 +123,39 @@ const UserAvatar = ({ url, size = "md", border = true }) => {
       <img src={url} alt="User" className="w-full h-full object-cover" />
     </div>
   );
+};
+
+const ConfirmationModal = ({ isOpen, title, message, onConfirm, onCancel, details }) => {
+    if (!isOpen) return null;
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
+            <div className="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl scale-100">
+                <div className="p-6">
+                    <div className="w-12 h-12 bg-fuchsia-500/20 rounded-full flex items-center justify-center mb-4 text-fuchsia-400">
+                        <AlertTriangle className="w-6 h-6" />
+                    </div>
+                    <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
+                    <p className="text-slate-400 text-sm mb-4">{message}</p>
+                    
+                    {details && (
+                        <div className="bg-slate-800/50 p-4 rounded-xl border border-white/5 mb-6 space-y-2">
+                            {details.map((item, idx) => (
+                                <div key={idx} className="flex justify-between text-sm">
+                                    <span className="text-slate-400">{item.label}</span>
+                                    <span className="text-white font-bold">{item.value}</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    <div className="flex gap-3">
+                        <button onClick={onCancel} className="flex-1 px-4 py-2 rounded-xl bg-slate-800 text-slate-300 font-bold hover:bg-slate-700 transition-colors">Batal</button>
+                        <button onClick={onConfirm} className="flex-1 px-4 py-2 rounded-xl bg-fuchsia-600 text-white font-bold hover:bg-fuchsia-500 transition-colors">Ya, Konfirmasi</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
 };
 
 // --- VIEW: PUBLIC DASHBOARD ---
@@ -307,7 +340,7 @@ const UserDashboard = ({ user, allUsers, logs, ranks }) => {
               </div>
           </div>
 
-          {/* MOTIVATION BAR (RESTORED) */}
+          {/* MOTIVATION BAR */}
           {userAbove && (
               <div className="mb-8 p-4 bg-slate-900/50 rounded-xl border border-white/5 flex flex-col md:flex-row items-center justify-between gap-2">
                   <div className="text-sm text-slate-400 text-center md:text-left">
@@ -391,10 +424,12 @@ const AdminStatistics = ({ users }) => {
     const totalLate = users.reduce((acc, u) => acc + u.stats.late, 0);
     const totalViral = users.reduce((acc, u) => acc + u.stats.viral, 0);
     const totalMissed = users.reduce((acc, u) => acc + u.stats.skip, 0);
+    const totalAssist = users.reduce((acc, u) => acc + u.stats.assist, 0);
     
-    const totalTasks = totalOnTime + totalLate + totalMissed;
+    const totalContentCreated = totalOnTime + totalLate;
+    const totalTasks = totalContentCreated + totalMissed;
     const consistencyRate = totalTasks > 0 ? Math.round((totalOnTime / totalTasks) * 100) : 0;
-    const viralRatio = totalTasks > 0 ? ((totalViral / totalTasks) * 100).toFixed(1) : 0;
+    const viralRatio = totalContentCreated > 0 ? ((totalViral / totalContentCreated) * 100).toFixed(1) : 0;
 
     // 2. Generate Recommendations (Simple Logic)
     const recommendations = [];
@@ -456,6 +491,31 @@ const AdminStatistics = ({ users }) => {
                     <div className="text-slate-400 text-xs uppercase font-bold mb-1">Total Missed</div>
                     <div className="text-2xl font-bold text-red-400">{totalMissed} <span className="text-sm font-normal text-slate-500">Tasks</span></div>
                 </Card>
+            </div>
+
+            {/* NEW: FAREWELL REPORT SECTION */}
+            <div className="bg-slate-900 border border-white/10 rounded-2xl p-6">
+                <h3 className="text-white font-bold text-lg flex items-center gap-2 mb-6">
+                    <FileText className="w-5 h-5 text-blue-400" />
+                    Laporan Akhir Periode (Farewell Report)
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="bg-slate-800/50 p-4 rounded-xl border border-white/5 text-center">
+                        <div className="text-sm text-slate-400 mb-1">Total Konten Diproduksi</div>
+                        <div className="text-3xl font-bold text-white">{totalContentCreated}</div>
+                        <div className="text-xs text-slate-500 mt-2">Gabungan On-Time & Late</div>
+                    </div>
+                    <div className="bg-slate-800/50 p-4 rounded-xl border border-white/5 text-center">
+                        <div className="text-sm text-slate-400 mb-1">Total Konten FYP/Viral</div>
+                        <div className="text-3xl font-bold text-fuchsia-400">{totalViral}</div>
+                        <div className="text-xs text-slate-500 mt-2">Dampak nyata ke audiens</div>
+                    </div>
+                    <div className="bg-slate-800/50 p-4 rounded-xl border border-white/5 text-center">
+                        <div className="text-sm text-slate-400 mb-1">Total Kolaborasi (Assist)</div>
+                        <div className="text-3xl font-bold text-blue-400">{totalAssist}</div>
+                        <div className="text-xs text-slate-500 mt-2">Kali saling membantu</div>
+                    </div>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -536,20 +596,29 @@ const AdminStatistics = ({ users }) => {
 const AdminUserDetail = ({ user, onClose, logs, ranks, onUpdateUser }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editForm, setEditForm] = useState({ name: user.name, role: user.role, password: user.password });
+    const [showSaveConfirm, setShowSaveConfirm] = useState(false);
 
     const totalTasks = user.stats.onTime + user.stats.late + user.stats.skip;
     const consistencyRate = totalTasks > 0 ? Math.round((user.stats.onTime / totalTasks) * 100) : 0;
     const userLogs = logs.filter(l => l.userId === user.id);
     const rankInfo = getRankInfo(user.xp, ranks).current;
 
-    const handleSave = () => {
+    const handleSaveConfirm = () => {
         onUpdateUser({ ...user, ...editForm });
         setIsEditing(false);
-        alert("Data user berhasil diupdate!");
+        setShowSaveConfirm(false);
     };
 
     return (
         <div className="max-w-4xl mx-auto space-y-6 animate-fade-in p-4 md:p-0">
+            <ConfirmationModal 
+                isOpen={showSaveConfirm}
+                title="Konfirmasi Perubahan"
+                message={`Anda yakin ingin mengubah data profil ${user.name}?`}
+                onConfirm={handleSaveConfirm}
+                onCancel={() => setShowSaveConfirm(false)}
+            />
+
             <button onClick={onClose} className="flex items-center text-slate-400 hover:text-white gap-2 text-sm font-medium transition-colors">
                 <ChevronLeft className="w-4 h-4" /> Kembali
             </button>
@@ -568,7 +637,7 @@ const AdminUserDetail = ({ user, onClose, logs, ranks, onUpdateUser }) => {
                                         <input className="w-full bg-slate-800 border border-white/20 rounded p-2 text-white" value={editForm.role} onChange={e => setEditForm({...editForm, role: e.target.value})} placeholder="Role" />
                                         <input className="w-full bg-slate-800 border border-white/20 rounded p-2 text-white font-mono text-sm" value={editForm.password} onChange={e => setEditForm({...editForm, password: e.target.value})} placeholder="Password" />
                                         <div className="flex gap-2 mt-2">
-                                            <button onClick={handleSave} className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded text-sm font-bold flex items-center gap-2"><Save className="w-4 h-4" /> Simpan Perubahan</button>
+                                            <button onClick={() => setShowSaveConfirm(true)} className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded text-sm font-bold flex items-center gap-2"><Save className="w-4 h-4" /> Simpan Perubahan</button>
                                             <button onClick={() => setIsEditing(false)} className="bg-slate-700 text-white px-4 py-2 rounded text-sm">Batal</button>
                                         </div>
                                     </div>
@@ -669,31 +738,51 @@ const AdminUserDetail = ({ user, onClose, logs, ranks, onUpdateUser }) => {
 const AdminPanel = ({ users, settings, setSettings, onUpdateUsers, onAddLog, activityLog, ranks, setRanks }) => {
   const [activeTab, setActiveTab] = useState('input'); 
   const [selectedUser, setSelectedUser] = useState('');
+  const [selectedActivityKey, setSelectedActivityKey] = useState(null); // New state for activity
   const [detailUser, setDetailUser] = useState(null); 
   const [isAddingUser, setIsAddingUser] = useState(false);
   const [newUserForm, setNewUserForm] = useState({ name: '', role: '', password: '' });
-  const [editingRank, setEditingRank] = useState(null); // For Rank Editing
+  const [editingRank, setEditingRank] = useState(null); 
+  
+  // Confirmation Modal State
+  const [showInputConfirm, setShowInputConfirm] = useState(false);
+  const [pendingPointData, setPendingPointData] = useState(null);
 
-  const handleAddPoint = (typeKey) => {
-    if (!selectedUser) return;
-    const userToUpdate = users.find(u => u.id === parseInt(selectedUser));
-    const config = settings.activities[typeKey];
+  const handlePreSubmit = () => {
+      if (!selectedUser || !selectedActivityKey) return;
+      const user = users.find(u => u.id === parseInt(selectedUser));
+      const activity = settings.activities[selectedActivityKey];
+      
+      setPendingPointData({
+          user: user,
+          activity: activity,
+          key: selectedActivityKey
+      });
+      setShowInputConfirm(true);
+  };
+
+  const handleConfirmSubmit = () => {
+    if (!pendingPointData) return;
+    const { user, activity, key } = pendingPointData;
     
     // Update Logic
-    const updatedUser = { ...userToUpdate, xp: userToUpdate.xp + config.xp };
-    updatedUser.stats = { ...updatedUser.stats }; // Copy to avoid ref issues
-    if (typeKey === 'ontime') { updatedUser.streak += 1; updatedUser.stats.onTime += 1; }
-    if (typeKey === 'late') { updatedUser.stats.late += 1; }
-    if (typeKey === 'assist') { updatedUser.stats.assist += 1; }
-    if (typeKey === 'fyp') { updatedUser.stats.viral += 1; }
-    if (typeKey === 'skip') { updatedUser.streak = 0; updatedUser.stats.skip += 1; }
+    const updatedUser = { ...user, xp: user.xp + activity.xp };
+    updatedUser.stats = { ...updatedUser.stats }; 
+    if (key === 'ontime') { updatedUser.streak += 1; updatedUser.stats.onTime += 1; }
+    if (key === 'late') { updatedUser.stats.late += 1; }
+    if (key === 'assist') { updatedUser.stats.assist += 1; }
+    if (key === 'fyp') { updatedUser.stats.viral += 1; }
+    if (key === 'skip') { updatedUser.streak = 0; updatedUser.stats.skip += 1; }
 
     const updatedUsersList = users.map(u => u.id === updatedUser.id ? updatedUser : u);
     onUpdateUsers(updatedUsersList);
 
     const today = new Date().toISOString().split('T')[0];
-    onAddLog({ id: Date.now(), userId: updatedUser.id, userName: updatedUser.name, action: config.label, xp: config.xp, type: typeKey === 'skip' ? 'negative' : 'positive', date: today });
-    alert(`Input Berhasil: ${updatedUser.name} - ${config.label}`);
+    onAddLog({ id: Date.now(), userId: updatedUser.id, userName: updatedUser.name, action: activity.label, xp: activity.xp, type: key === 'skip' ? 'negative' : 'positive', date: today });
+    
+    setShowInputConfirm(false);
+    setSelectedActivityKey(null);
+    setPendingPointData(null);
   };
 
   const handleCreateUser = (e) => {
@@ -716,7 +805,7 @@ const AdminPanel = ({ users, settings, setSettings, onUpdateUsers, onAddLog, act
   const handleUpdateUserInDetail = (updatedUser) => {
       const newUsers = users.map(u => u.id === updatedUser.id ? updatedUser : u);
       onUpdateUsers(newUsers);
-      setDetailUser(updatedUser); // Keep viewing the updated user
+      setDetailUser(updatedUser); 
   };
 
   const handleDeleteUser = (id) => {
@@ -758,11 +847,25 @@ const AdminPanel = ({ users, settings, setSettings, onUpdateUsers, onAddLog, act
         
         {activeTab === 'input' && (
             <div className="max-w-3xl mx-auto space-y-8 animate-fade-in">
+                {/* Modal Konfirmasi Input Poin */}
+                <ConfirmationModal 
+                    isOpen={showInputConfirm}
+                    title="Konfirmasi Poin"
+                    message="Apakah data aktivitas berikut sudah benar?"
+                    onCancel={() => setShowInputConfirm(false)}
+                    onConfirm={handleConfirmSubmit}
+                    details={pendingPointData ? [
+                        { label: 'Kreator', value: pendingPointData.user.name },
+                        { label: 'Aktivitas', value: pendingPointData.activity.label },
+                        { label: 'Poin', value: `${pendingPointData.activity.xp} XP` }
+                    ] : []}
+                />
+
                 <h2 className="text-xl font-bold text-white">Input Poin Harian</h2>
                 <Card className="p-6">
                      <div className="space-y-6">
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Pilih Kreator</label>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">1. Pilih Kreator</label>
                             <select 
                                 className="w-full bg-slate-900 border border-white/10 rounded-xl p-3 text-white focus:ring-2 focus:ring-fuchsia-500 outline-none"
                                 value={selectedUser}
@@ -772,22 +875,48 @@ const AdminPanel = ({ users, settings, setSettings, onUpdateUsers, onAddLog, act
                                 {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                             </select>
                         </div>
-                        {selectedUser && (
+                        
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">2. Pilih Aktivitas</label>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 {Object.entries(settings.activities).map(([key, config]) => (
                                     <button
                                         key={key}
-                                        onClick={() => handleAddPoint(key)}
-                                        className="flex items-center justify-between p-4 bg-slate-900 border border-white/5 rounded-xl hover:border-fuchsia-500/50 hover:bg-slate-800 transition-all group"
+                                        onClick={() => setSelectedActivityKey(key)}
+                                        className={`flex items-center justify-between p-4 rounded-xl border transition-all group text-left ${
+                                            selectedActivityKey === key 
+                                            ? 'bg-fuchsia-600/20 border-fuchsia-500 ring-1 ring-fuchsia-500' 
+                                            : 'bg-slate-900 border-white/5 hover:border-fuchsia-500/50 hover:bg-slate-800'
+                                        }`}
                                     >
-                                        <span className="text-sm font-medium text-slate-200">{config.label}</span>
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${selectedActivityKey === key ? 'border-fuchsia-400 bg-fuchsia-400' : 'border-slate-500'}`}>
+                                                {selectedActivityKey === key && <div className="w-2 h-2 rounded-full bg-white" />}
+                                            </div>
+                                            <span className="text-sm font-medium text-slate-200">{config.label}</span>
+                                        </div>
                                         <span className={`text-xs font-bold px-2 py-1 rounded ${key === 'skip' ? 'bg-red-500/20 text-red-300' : 'bg-emerald-500/20 text-emerald-300'}`}>
                                             {config.xp} XP
                                         </span>
                                     </button>
                                 ))}
                             </div>
-                        )}
+                        </div>
+
+                        <div className="pt-4 border-t border-white/5">
+                            <button 
+                                onClick={handlePreSubmit}
+                                disabled={!selectedUser || !selectedActivityKey}
+                                className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${
+                                    !selectedUser || !selectedActivityKey 
+                                    ? 'bg-slate-800 text-slate-500 cursor-not-allowed' 
+                                    : 'bg-fuchsia-600 hover:bg-fuchsia-500 text-white shadow-lg shadow-fuchsia-900/50'
+                                }`}
+                            >
+                                <MousePointerClick className="w-5 h-5" />
+                                Submit Poin
+                            </button>
+                        </div>
                      </div>
                 </Card>
             </div>
@@ -1040,7 +1169,7 @@ export default function App() {
                 <div className="w-8 h-8 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-lg flex items-center justify-center font-bold text-white text-xs shadow-lg">CL</div>
                 <div className="hidden md:block">
                     <div className="font-bold text-white leading-none">Creator League</div>
-                    <div className="text-[10px] text-slate-400 font-mono">INTERNAL SYSTEM v5.0</div>
+                    <div className="text-[10px] text-slate-400 font-mono">INTERNAL SYSTEM v5.1</div>
                 </div>
             </div>
             {viewMode === 'public' ? (
