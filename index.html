@@ -5,7 +5,7 @@ import {
   Lock, BarChart3, Search, X, TrendingUp, AlertCircle, 
   CheckCircle2, Settings, UserPlus, Trash2, Calendar, User,
   ChevronLeft, PieChart, ArrowUpRight, Lightbulb, Medal, Key,
-  Edit2, Save
+  Edit2, Save, Download, AlertTriangle, PenTool, Printer, FileText
 } from 'lucide-react';
 
 // --- CONFIGURATION & DUMMY DATA ---
@@ -80,26 +80,6 @@ const INITIAL_USERS = [
     xp: 450,
     streak: 1,
     stats: { onTime: 14, late: 2, assist: 3, viral: 2, skip: 1 }
-  },
-  {
-    id: 6,
-    name: "Fajar Live",
-    role: "Live Streamer",
-    password: "123",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Fajar",
-    xp: 1250,
-    streak: 4,
-    stats: { onTime: 10, late: 1, assist: 0, viral: 3, skip: 0 }
-  },
-  {
-    id: 7,
-    name: "Gita Host",
-    role: "Talent / Host",
-    password: "123",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Gita",
-    xp: 2100,
-    streak: 2,
-    stats: { onTime: 18, late: 0, assist: 12, viral: 2, skip: 0 }
   }
 ];
 
@@ -115,7 +95,6 @@ const INITIAL_LOGS = [
 
 // --- HELPER ---
 const getRankInfo = (xp, ranks) => {
-    // Sort ranks by min XP to ensure correct order
     const sortedRanks = [...ranks].sort((a, b) => a.min - b.min);
     let currentRank = sortedRanks[0];
     let nextRank = null;
@@ -155,7 +134,7 @@ const PublicDashboard = ({ users, activityLog, settings, ranks }) => {
   const mostDisciplined = [...users].sort((a, b) => b.stats.onTime - a.stats.onTime)[0];
   const mostHelpful = [...users].sort((a, b) => b.stats.assist - a.stats.assist)[0];
   const mostViral = [...users].sort((a, b) => b.stats.viral - a.stats.viral)[0];
-  const publicLog = activityLog.filter(log => log.xp > 0); // Hide negative logs from public
+  const publicLog = activityLog.filter(log => log.xp > 0);
 
   return (
     <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-12 animate-fade-in pb-24">
@@ -170,7 +149,7 @@ const PublicDashboard = ({ users, activityLog, settings, ranks }) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-8 space-y-8">
-          {/* PODIUM - Added margin top to prevent overlap */}
+          {/* PODIUM */}
           <div className="relative min-h-[380px] flex justify-center items-end gap-2 md:gap-4 mt-8 md:mt-12">
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-violet-500/10 blur-[100px] rounded-full -z-10" />
 
@@ -300,7 +279,6 @@ const UserDashboard = ({ user, allUsers, logs, ranks }) => {
   return (
       <div className="max-w-4xl mx-auto p-4 md:p-8 animate-fade-in pb-20">
           <div className="flex flex-col md:flex-row items-center gap-6 mb-8 bg-slate-800/50 p-6 rounded-2xl border border-white/10 relative overflow-hidden">
-              {/* Badge Background Glow */}
               <div className="absolute -top-10 -right-10 w-40 h-40 bg-fuchsia-500/20 blur-[50px] rounded-full pointer-events-none" />
               
               <UserAvatar url={user.avatar} size="2xl" />
@@ -328,6 +306,18 @@ const UserDashboard = ({ user, allUsers, logs, ranks }) => {
                   </div>
               </div>
           </div>
+
+          {/* MOTIVATION BAR (RESTORED) */}
+          {userAbove && (
+              <div className="mb-8 p-4 bg-slate-900/50 rounded-xl border border-white/5 flex flex-col md:flex-row items-center justify-between gap-2">
+                  <div className="text-sm text-slate-400 text-center md:text-left">
+                    Balap <strong className="text-white">{userAbove.name}</strong> untuk naik ke Rank #{myRank - 1}
+                  </div>
+                  <div className="text-fuchsia-400 font-bold text-sm bg-fuchsia-500/10 px-3 py-1 rounded-lg border border-fuchsia-500/20 whitespace-nowrap">
+                    Butuh {xpToNext} XP lagi!
+                  </div>
+              </div>
+          )}
 
           {/* Level Progress Bar */}
           {nextRankInfo && (
@@ -392,7 +382,7 @@ const UserDashboard = ({ user, allUsers, logs, ranks }) => {
   )
 };
 
-// --- VIEW: ADMIN STATISTICS (ADDED MISSING COMPONENT) ---
+// --- VIEW: ADMIN STATISTICS ---
 
 const AdminStatistics = ({ users }) => {
     // 1. Calculate Core Metrics
@@ -432,9 +422,21 @@ const AdminStatistics = ({ users }) => {
         });
     }
 
+    const handlePrint = () => {
+        window.print();
+    };
+
     return (
         <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
-            <h2 className="text-2xl font-bold text-white mb-6">Analisis & Statistik Divisi</h2>
+            <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-white">Analisis & Statistik Divisi</h2>
+                <button 
+                    onClick={handlePrint}
+                    className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg border border-white/10 transition-colors text-sm"
+                >
+                    <Printer className="w-4 h-4" /> Unduh Laporan PDF
+                </button>
+            </div>
 
             {/* Top Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -529,18 +531,27 @@ const AdminStatistics = ({ users }) => {
     );
 };
 
-// --- VIEW: ADMIN USER DETAIL (RESTORED & IMPROVED) ---
+// --- VIEW: ADMIN USER DETAIL (IMPROVED - WITH EDIT FEATURE) ---
 
-const AdminUserDetail = ({ user, onClose, logs, ranks }) => {
+const AdminUserDetail = ({ user, onClose, logs, ranks, onUpdateUser }) => {
+    const [isEditing, setIsEditing] = useState(false);
+    const [editForm, setEditForm] = useState({ name: user.name, role: user.role, password: user.password });
+
     const totalTasks = user.stats.onTime + user.stats.late + user.stats.skip;
     const consistencyRate = totalTasks > 0 ? Math.round((user.stats.onTime / totalTasks) * 100) : 0;
     const userLogs = logs.filter(l => l.userId === user.id);
     const rankInfo = getRankInfo(user.xp, ranks).current;
 
+    const handleSave = () => {
+        onUpdateUser({ ...user, ...editForm });
+        setIsEditing(false);
+        alert("Data user berhasil diupdate!");
+    };
+
     return (
         <div className="max-w-4xl mx-auto space-y-6 animate-fade-in p-4 md:p-0">
             <button onClick={onClose} className="flex items-center text-slate-400 hover:text-white gap-2 text-sm font-medium transition-colors">
-                <ChevronLeft className="w-4 h-4" /> Kembali ke List User
+                <ChevronLeft className="w-4 h-4" /> Kembali
             </button>
 
             <div className="bg-slate-800/50 border border-white/10 rounded-2xl p-6 relative overflow-hidden">
@@ -549,17 +560,37 @@ const AdminUserDetail = ({ user, onClose, logs, ranks }) => {
                     <UserAvatar url={user.avatar} size="2xl" />
                     <div className="flex-1 w-full">
                         <div className="flex justify-between items-start">
-                            <div>
-                                <h2 className="text-2xl font-bold text-white">{user.name}</h2>
-                                <p className="text-slate-400 mb-2">{user.role}</p>
-                                <span className={`text-xs border px-2 py-0.5 rounded-full ${rankInfo.color} ${rankInfo.border}`}>
-                                    {rankInfo.icon} {rankInfo.title}
-                                </span>
+                            <div className="w-full">
+                                {isEditing ? (
+                                    <div className="space-y-3 mb-4 bg-slate-900/50 p-4 rounded-xl border border-white/10">
+                                        <div className="text-xs text-slate-400 uppercase font-bold">Edit Profile</div>
+                                        <input className="w-full bg-slate-800 border border-white/20 rounded p-2 text-white font-bold" value={editForm.name} onChange={e => setEditForm({...editForm, name: e.target.value})} placeholder="Nama" />
+                                        <input className="w-full bg-slate-800 border border-white/20 rounded p-2 text-white" value={editForm.role} onChange={e => setEditForm({...editForm, role: e.target.value})} placeholder="Role" />
+                                        <input className="w-full bg-slate-800 border border-white/20 rounded p-2 text-white font-mono text-sm" value={editForm.password} onChange={e => setEditForm({...editForm, password: e.target.value})} placeholder="Password" />
+                                        <div className="flex gap-2 mt-2">
+                                            <button onClick={handleSave} className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded text-sm font-bold flex items-center gap-2"><Save className="w-4 h-4" /> Simpan Perubahan</button>
+                                            <button onClick={() => setIsEditing(false)} className="bg-slate-700 text-white px-4 py-2 rounded text-sm">Batal</button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="flex items-center gap-3">
+                                            <h2 className="text-2xl font-bold text-white">{user.name}</h2>
+                                            <button onClick={() => setIsEditing(true)} className="text-slate-500 hover:text-white bg-slate-800 p-2 rounded-lg transition-colors"><PenTool className="w-4 h-4" /></button>
+                                        </div>
+                                        <p className="text-slate-400 mb-2">{user.role}</p>
+                                        <span className={`text-xs border px-2 py-0.5 rounded-full ${rankInfo.color} ${rankInfo.border}`}>
+                                            {rankInfo.icon} {rankInfo.title}
+                                        </span>
+                                    </>
+                                )}
                             </div>
-                            <div className="text-right">
-                                <div className="text-3xl font-mono font-bold text-fuchsia-400">{user.xp} <span className="text-sm text-slate-500">XP</span></div>
-                                <div className="text-xs text-slate-500">Total Accumulation</div>
-                            </div>
+                            {!isEditing && (
+                                <div className="text-right">
+                                    <div className="text-3xl font-mono font-bold text-fuchsia-400">{user.xp} <span className="text-sm text-slate-500">XP</span></div>
+                                    <div className="text-xs text-slate-500">Total Accumulation</div>
+                                </div>
+                            )}
                         </div>
 
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
@@ -638,21 +669,19 @@ const AdminUserDetail = ({ user, onClose, logs, ranks }) => {
 const AdminPanel = ({ users, settings, setSettings, onUpdateUsers, onAddLog, activityLog, ranks, setRanks }) => {
   const [activeTab, setActiveTab] = useState('input'); 
   const [selectedUser, setSelectedUser] = useState('');
-  const [detailUser, setDetailUser] = useState(null); // State untuk detail user
-
-  // Config State
+  const [detailUser, setDetailUser] = useState(null); 
   const [isAddingUser, setIsAddingUser] = useState(false);
   const [newUserForm, setNewUserForm] = useState({ name: '', role: '', password: '' });
-  
-  // Rank Edit State
-  const [editingRank, setEditingRank] = useState(null);
+  const [editingRank, setEditingRank] = useState(null); // For Rank Editing
 
   const handleAddPoint = (typeKey) => {
     if (!selectedUser) return;
     const userToUpdate = users.find(u => u.id === parseInt(selectedUser));
     const config = settings.activities[typeKey];
     
+    // Update Logic
     const updatedUser = { ...userToUpdate, xp: userToUpdate.xp + config.xp };
+    updatedUser.stats = { ...updatedUser.stats }; // Copy to avoid ref issues
     if (typeKey === 'ontime') { updatedUser.streak += 1; updatedUser.stats.onTime += 1; }
     if (typeKey === 'late') { updatedUser.stats.late += 1; }
     if (typeKey === 'assist') { updatedUser.stats.assist += 1; }
@@ -663,16 +692,7 @@ const AdminPanel = ({ users, settings, setSettings, onUpdateUsers, onAddLog, act
     onUpdateUsers(updatedUsersList);
 
     const today = new Date().toISOString().split('T')[0];
-    onAddLog({
-        id: Date.now(),
-        userId: updatedUser.id,
-        userName: updatedUser.name,
-        action: config.label,
-        xp: config.xp,
-        type: typeKey === 'fyp' ? 'special' : typeKey === 'skip' ? 'negative' : 'positive',
-        date: today
-    });
-
+    onAddLog({ id: Date.now(), userId: updatedUser.id, userName: updatedUser.name, action: config.label, xp: config.xp, type: typeKey === 'skip' ? 'negative' : 'positive', date: today });
     alert(`Input Berhasil: ${updatedUser.name} - ${config.label}`);
   };
 
@@ -693,35 +713,44 @@ const AdminPanel = ({ users, settings, setSettings, onUpdateUsers, onAddLog, act
     setNewUserForm({ name: '', role: '', password: '' });
   };
 
+  const handleUpdateUserInDetail = (updatedUser) => {
+      const newUsers = users.map(u => u.id === updatedUser.id ? updatedUser : u);
+      onUpdateUsers(newUsers);
+      setDetailUser(updatedUser); // Keep viewing the updated user
+  };
+
   const handleDeleteUser = (id) => {
     if(window.confirm('Yakin hapus user ini?')) onUpdateUsers(users.filter(u => u.id !== id));
   };
   
+  const handleResetSeason = () => {
+      if(window.confirm("PERINGATAN: Ini akan mereset SEMUA XP dan Statistik user menjadi 0 untuk Season baru. User tidak akan dihapus. Lanjutkan?")) {
+          const resetUsers = users.map(u => ({
+              ...u, xp: 0, streak: 0, stats: { onTime: 0, late: 0, assist: 0, viral: 0, skip: 0 }
+          }));
+          onUpdateUsers(resetUsers);
+          alert("Season Reset Berhasil! Semua poin kembali ke 0.");
+      }
+  }
+
   const handleUpdateRank = (rankId, field, value) => {
       setRanks(ranks.map(r => r.id === rankId ? { ...r, [field]: value } : r));
   };
 
   // IF VIEWING DETAIL
   if (detailUser) {
-      return <AdminUserDetail user={detailUser} logs={activityLog} ranks={ranks} onClose={() => setDetailUser(null)} />;
+      return <AdminUserDetail user={detailUser} logs={activityLog} ranks={ranks} onClose={() => setDetailUser(null)} onUpdateUser={handleUpdateUserInDetail} />;
   }
 
   return (
     <div className="flex flex-col md:flex-row min-h-[calc(100vh-64px)]">
       {/* SIDEBAR (Responsive: Top on mobile, Side on desktop) */}
-      <aside className="w-full md:w-64 bg-slate-900 border-b md:border-b-0 md:border-r border-white/5 p-4 md:p-6 flex md:flex-col gap-2 overflow-x-auto">
-         <button onClick={() => setActiveTab('input')} className={`flex-shrink-0 flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 rounded-xl transition-all text-sm md:text-base ${activeTab === 'input' ? 'bg-fuchsia-600 text-white font-bold' : 'text-slate-400 hover:bg-slate-800'}`}>
-            <LayoutDashboard className="w-4 h-4 md:w-5 md:h-5" /> <span className="hidden md:inline">Input Poin</span> <span className="md:hidden">Input</span>
-         </button>
-         <button onClick={() => setActiveTab('stats')} className={`flex-shrink-0 flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 rounded-xl transition-all text-sm md:text-base ${activeTab === 'stats' ? 'bg-fuchsia-600 text-white font-bold' : 'text-slate-400 hover:bg-slate-800'}`}>
-            <BarChart3 className="w-4 h-4 md:w-5 md:h-5" /> <span className="hidden md:inline">Statistics</span> <span className="md:hidden">Stats</span>
-         </button>
-         <button onClick={() => setActiveTab('users')} className={`flex-shrink-0 flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 rounded-xl transition-all text-sm md:text-base ${activeTab === 'users' ? 'bg-fuchsia-600 text-white font-bold' : 'text-slate-400 hover:bg-slate-800'}`}>
-            <Users className="w-4 h-4 md:w-5 md:h-5" /> <span className="hidden md:inline">Manage Users</span> <span className="md:hidden">Users</span>
-         </button>
-         <button onClick={() => setActiveTab('settings')} className={`flex-shrink-0 flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 rounded-xl transition-all text-sm md:text-base ${activeTab === 'settings' ? 'bg-fuchsia-600 text-white font-bold' : 'text-slate-400 hover:bg-slate-800'}`}>
-            <Settings className="w-4 h-4 md:w-5 md:h-5" /> <span className="hidden md:inline">Settings</span> <span className="md:hidden">Config</span>
-         </button>
+      <aside className="w-full md:w-64 bg-slate-900 border-b md:border-b-0 md:border-r border-white/5 p-4 flex md:flex-col gap-2 overflow-x-auto">
+         {['input', 'stats', 'users', 'settings'].map(tab => (
+             <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-shrink-0 flex items-center gap-3 px-4 py-3 rounded-xl transition-all capitalize ${activeTab === tab ? 'bg-fuchsia-600 text-white font-bold' : 'text-slate-400 hover:bg-slate-800'}`}>
+                {tab === 'input' ? <LayoutDashboard className="w-5 h-5" /> : tab === 'stats' ? <BarChart3 className="w-5 h-5" /> : tab === 'users' ? <Users className="w-5 h-5" /> : <Settings className="w-5 h-5" />} {tab}
+             </button>
+         ))}
       </aside>
 
       {/* CONTENT AREA */}
@@ -729,8 +758,8 @@ const AdminPanel = ({ users, settings, setSettings, onUpdateUsers, onAddLog, act
         
         {activeTab === 'input' && (
             <div className="max-w-3xl mx-auto space-y-8 animate-fade-in">
-                <h2 className="text-xl md:text-2xl font-bold text-white">Input Aktivitas Harian</h2>
-                <Card className="p-6 md:p-8">
+                <h2 className="text-xl font-bold text-white">Input Poin Harian</h2>
+                <Card className="p-6">
                      <div className="space-y-6">
                         <div>
                             <label className="block text-sm font-medium text-slate-300 mb-2">Pilih Kreator</label>
@@ -781,7 +810,7 @@ const AdminPanel = ({ users, settings, setSettings, onUpdateUsers, onAddLog, act
                             <tr>
                                 <th className="p-4">User</th>
                                 <th className="p-4 text-center">Rank Badge</th>
-                                <th className="p-4 text-center">XP</th>
+                                <th className="p-4 text-center">Total XP</th>
                                 <th className="p-4 text-right">Actions</th>
                             </tr>
                         </thead>
@@ -854,7 +883,7 @@ const AdminPanel = ({ users, settings, setSettings, onUpdateUsers, onAddLog, act
                                 </div>
                                 <div className="pt-4">
                                     <button type="submit" className="w-full bg-fuchsia-600 hover:bg-fuchsia-500 text-white font-bold py-3 rounded-lg">
-                                        Simpan User
+                                        Simpan User (Submit)
                                     </button>
                                 </div>
                             </form>
@@ -926,7 +955,7 @@ const AdminPanel = ({ users, settings, setSettings, onUpdateUsers, onAddLog, act
                 </div>
 
                 {/* XP Settings */}
-                <div className="space-y-4">
+                <div className="space-y-4 border-b border-white/10 pb-8">
                     <h3 className="text-lg font-bold text-slate-300">Nilai XP Aktivitas</h3>
                     <div className="grid grid-cols-1 gap-3">
                         {Object.entries(settings.activities).map(([key, config]) => (
@@ -935,6 +964,17 @@ const AdminPanel = ({ users, settings, setSettings, onUpdateUsers, onAddLog, act
                                 <input type="number" className="w-20 bg-slate-900 border border-white/10 rounded-lg px-2 py-1 text-white text-center font-bold focus:border-fuchsia-500 outline-none" defaultValue={config.xp} />
                             </div>
                         ))}
+                    </div>
+                </div>
+
+                {/* Danger Zone */}
+                <div className="space-y-4">
+                    <h3 className="text-lg font-bold text-red-400 flex items-center gap-2"><AlertTriangle className="w-5 h-5" /> Danger Zone</h3>
+                    <div className="grid grid-cols-1 gap-4">
+                        <button onClick={handleResetSeason} className="p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-left hover:bg-red-500/20 transition-colors">
+                            <div className="font-bold text-red-400 mb-1">Reset Season Data</div>
+                            <div className="text-xs text-red-300/70">Hapus semua XP & Log, mulai season baru. User tidak dihapus.</div>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -958,7 +998,6 @@ export default function App() {
 
   const handleAddLog = (newLog) => setActivityLog([newLog, ...activityLog]);
 
-  // LOGIN LOGIC
   const [loginPass, setLoginPass] = useState('');
   const [loginUserSelect, setLoginUserSelect] = useState('');
   const [loginTab, setLoginTab] = useState('user'); 
@@ -991,43 +1030,26 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-950 font-sans selection:bg-fuchsia-500/30 overflow-x-hidden text-slate-200">
-      
-      {/* Background Ambience */}
       <div className="fixed inset-0 pointer-events-none z-0">
           <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-violet-600/10 rounded-full blur-[120px]" />
           <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-fuchsia-600/10 rounded-full blur-[120px]" />
       </div>
-
-      {/* NAVBAR */}
       <nav className="relative z-50 border-b border-white/5 bg-slate-900/50 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
             <div className="flex items-center gap-3 cursor-pointer" onClick={() => { setViewMode('public'); setCurrentUser(null); }}>
                 <div className="w-8 h-8 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-lg flex items-center justify-center font-bold text-white text-xs shadow-lg">CL</div>
                 <div className="hidden md:block">
                     <div className="font-bold text-white leading-none">Creator League</div>
-                    <div className="text-[10px] text-slate-400 font-mono">INTERNAL SYSTEM v4.0</div>
+                    <div className="text-[10px] text-slate-400 font-mono">INTERNAL SYSTEM v5.0</div>
                 </div>
             </div>
-            
             {viewMode === 'public' ? (
-                <button 
-                    onClick={() => setViewMode('login')}
-                    className="flex items-center gap-2 text-xs font-bold text-fuchsia-400 hover:text-fuchsia-300 px-4 py-2 bg-fuchsia-500/10 border border-fuchsia-500/30 rounded-lg transition-colors"
-                >
-                    <Lock className="w-3 h-3" /> Login
-                </button>
+                <button onClick={() => setViewMode('login')} className="flex items-center gap-2 text-xs font-bold text-fuchsia-400 hover:text-fuchsia-300 px-4 py-2 bg-fuchsia-500/10 border border-fuchsia-500/30 rounded-lg transition-colors"><Lock className="w-3 h-3" /> Login</button>
             ) : (
-                <button 
-                    onClick={() => { setViewMode('public'); setCurrentUser(null); }}
-                    className="flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-white px-3 py-1.5 bg-slate-800 rounded-lg transition-colors border border-white/5"
-                >
-                    <LogOut className="w-3 h-3" /> Logout
-                </button>
+                <button onClick={() => { setViewMode('public'); setCurrentUser(null); }} className="flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-white px-3 py-1.5 bg-slate-800 rounded-lg transition-colors border border-white/5"><LogOut className="w-3 h-3" /> Logout</button>
             )}
         </div>
       </nav>
-
-      {/* MAIN LAYOUT */}
       <main className="relative z-10 min-h-[calc(100vh-64px)]">
           {viewMode === 'login' ? (
               <div className="flex flex-col items-center justify-center h-[80vh] animate-fade-in px-4">
@@ -1036,69 +1058,28 @@ export default function App() {
                           <button onClick={() => setLoginTab('user')} className={`px-4 py-2 text-sm font-bold ${loginTab === 'user' ? 'text-white border-b-2 border-fuchsia-500' : 'text-slate-500'}`}>Creator Login</button>
                           <button onClick={() => setLoginTab('admin')} className={`px-4 py-2 text-sm font-bold ${loginTab === 'admin' ? 'text-white border-b-2 border-fuchsia-500' : 'text-slate-500'}`}>Admin Login</button>
                       </div>
-
                       {loginTab === 'user' ? (
                           <div className="space-y-4">
-                              <div className="text-center mb-4">
-                                  <div className="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-2"><User className="w-6 h-6 text-fuchsia-400" /></div>
-                                  <h3 className="text-white font-bold">Masuk sebagai Kreator</h3>
-                              </div>
-                              <select 
-                                  className="w-full bg-slate-950 border border-white/10 rounded-lg p-3 text-white outline-none"
-                                  value={loginUserSelect}
-                                  onChange={(e) => setLoginUserSelect(e.target.value)}
-                              >
-                                  <option value="">-- Pilih Namamu --</option>
-                                  {users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
-                              </select>
-                              <div className="relative">
-                                  <input 
-                                      type="password" 
-                                      placeholder="PIN / Password"
-                                      className="w-full bg-slate-950 border border-white/10 rounded-lg p-3 pl-10 text-white outline-none"
-                                      value={loginPass}
-                                      onChange={(e) => setLoginPass(e.target.value)}
-                                  />
-                                  <Key className="w-4 h-4 text-slate-500 absolute left-3 top-3.5" />
-                              </div>
+                              <div className="text-center mb-4"><div className="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-2"><User className="w-6 h-6 text-fuchsia-400" /></div><h3 className="text-white font-bold">Masuk sebagai Kreator</h3></div>
+                              <select className="w-full bg-slate-950 border border-white/10 rounded-lg p-3 text-white outline-none" value={loginUserSelect} onChange={(e) => setLoginUserSelect(e.target.value)}><option value="">-- Pilih Namamu --</option>{users.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}</select>
+                              <div className="relative"><input type="password" placeholder="PIN / Password" className="w-full bg-slate-950 border border-white/10 rounded-lg p-3 pl-10 text-white outline-none" value={loginPass} onChange={(e) => setLoginPass(e.target.value)} /><Key className="w-4 h-4 text-slate-500 absolute left-3 top-3.5" /></div>
                           </div>
                       ) : (
                           <div className="space-y-4">
-                              <div className="text-center mb-4">
-                                  <div className="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-2"><Settings className="w-6 h-6 text-fuchsia-400" /></div>
-                                  <h3 className="text-white font-bold">Masuk sebagai Admin</h3>
-                              </div>
-                              <input 
-                                  type="password" 
-                                  placeholder="Password Admin (admin123)"
-                                  className="w-full bg-slate-950 border border-white/10 rounded-lg p-3 text-white outline-none"
-                                  value={loginPass}
-                                  onChange={(e) => setLoginPass(e.target.value)}
-                              />
+                              <div className="text-center mb-4"><div className="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-2"><Settings className="w-6 h-6 text-fuchsia-400" /></div><h3 className="text-white font-bold">Masuk sebagai Admin</h3></div>
+                              <input type="password" placeholder="Password Admin (admin123)" className="w-full bg-slate-950 border border-white/10 rounded-lg p-3 text-white outline-none" value={loginPass} onChange={(e) => setLoginPass(e.target.value)} />
                           </div>
                       )}
-
-                      <button 
-                          onClick={handleLogin}
-                          className="w-full mt-6 bg-fuchsia-600 hover:bg-fuchsia-500 text-white font-bold py-3 rounded-lg transition-colors"
-                      >
-                          Masuk Dashboard
-                      </button>
+                      <button onClick={handleLogin} className="w-full mt-6 bg-fuchsia-600 hover:bg-fuchsia-500 text-white font-bold py-3 rounded-lg transition-colors">Masuk Dashboard</button>
                   </Card>
               </div>
           ) : (
               renderContent()
           )}
       </main>
-
       <style>{`
-        @keyframes fade-in {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in {
-          animation: fade-in 0.4s ease-out forwards;
-        }
+        @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fade-in 0.4s ease-out forwards; }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
