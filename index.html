@@ -392,6 +392,143 @@ const UserDashboard = ({ user, allUsers, logs, ranks }) => {
   )
 };
 
+// --- VIEW: ADMIN STATISTICS (ADDED MISSING COMPONENT) ---
+
+const AdminStatistics = ({ users }) => {
+    // 1. Calculate Core Metrics
+    const totalXP = users.reduce((acc, u) => acc + u.xp, 0);
+    const totalOnTime = users.reduce((acc, u) => acc + u.stats.onTime, 0);
+    const totalLate = users.reduce((acc, u) => acc + u.stats.late, 0);
+    const totalViral = users.reduce((acc, u) => acc + u.stats.viral, 0);
+    const totalMissed = users.reduce((acc, u) => acc + u.stats.skip, 0);
+    
+    const totalTasks = totalOnTime + totalLate + totalMissed;
+    const consistencyRate = totalTasks > 0 ? Math.round((totalOnTime / totalTasks) * 100) : 0;
+    const viralRatio = totalTasks > 0 ? ((totalViral / totalTasks) * 100).toFixed(1) : 0;
+
+    // 2. Generate Recommendations (Simple Logic)
+    const recommendations = [];
+    
+    if (consistencyRate < 70) {
+        recommendations.push({ title: "Disiplin Rendah", desc: "Rata-rata On-Time di bawah 70%. Coba evaluasi beban kerja tim atau adakan sesi manajemen waktu.", type: "warning" });
+    } else {
+        recommendations.push({ title: "Konsistensi Bagus", desc: "Tim menjaga ritme kerja yang baik. Pertahankan momentum ini dengan reward kecil.", type: "positive" });
+    }
+
+    if (totalViral < 5) {
+        recommendations.push({ title: "Impact Belum Terasa", desc: "Angka FYP masih rendah. Sarankan brainstorming ide konten yang lebih relevan/trending.", type: "info" });
+    }
+
+    const strugglingUsers = users.filter(u => {
+        const t = u.stats.onTime + u.stats.late + u.stats.skip;
+        return t > 0 && (u.stats.onTime / t) < 0.5;
+    });
+
+    if (strugglingUsers.length > 0) {
+        recommendations.push({ 
+            title: "Butuh Perhatian Khusus", 
+            desc: `${strugglingUsers.map(u => u.name).join(", ")} memiliki tingkat keterlambatan tinggi. Lakukan 1-on-1 coaching.`, 
+            type: "urgent" 
+        });
+    }
+
+    return (
+        <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
+            <h2 className="text-2xl font-bold text-white mb-6">Analisis & Statistik Divisi</h2>
+
+            {/* Top Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Card className="bg-slate-800/50">
+                    <div className="text-slate-400 text-xs uppercase font-bold mb-1">Productivity</div>
+                    <div className="text-2xl font-bold text-white">{totalXP} <span className="text-sm font-normal text-slate-500">XP</span></div>
+                </Card>
+                <Card className="bg-slate-800/50">
+                    <div className="text-slate-400 text-xs uppercase font-bold mb-1">Consistency Rate</div>
+                    <div className={`text-2xl font-bold ${consistencyRate > 80 ? 'text-emerald-400' : 'text-yellow-400'}`}>{consistencyRate}%</div>
+                </Card>
+                <Card className="bg-slate-800/50">
+                    <div className="text-slate-400 text-xs uppercase font-bold mb-1">Viral Ratio</div>
+                    <div className="text-2xl font-bold text-fuchsia-400">{viralRatio}%</div>
+                </Card>
+                <Card className="bg-slate-800/50">
+                    <div className="text-slate-400 text-xs uppercase font-bold mb-1">Total Missed</div>
+                    <div className="text-2xl font-bold text-red-400">{totalMissed} <span className="text-sm font-normal text-slate-500">Tasks</span></div>
+                </Card>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Recommendations Section */}
+                <div className="space-y-4">
+                    <h3 className="text-white font-bold text-lg flex items-center gap-2">
+                        <Lightbulb className="w-5 h-5 text-yellow-400" />
+                        AI Insights & Recommendations
+                    </h3>
+                    <div className="space-y-3">
+                        {recommendations.map((rec, idx) => (
+                            <div key={idx} className={`p-4 rounded-xl border flex gap-3 ${
+                                rec.type === 'warning' ? 'bg-orange-500/10 border-orange-500/20' : 
+                                rec.type === 'positive' ? 'bg-emerald-500/10 border-emerald-500/20' : 
+                                rec.type === 'urgent' ? 'bg-red-500/10 border-red-500/20' :
+                                'bg-blue-500/10 border-blue-500/20'
+                            }`}>
+                                <div className={`mt-1 w-2 h-2 rounded-full shrink-0 ${
+                                     rec.type === 'warning' ? 'bg-orange-500' : 
+                                     rec.type === 'positive' ? 'bg-emerald-500' : 
+                                     rec.type === 'urgent' ? 'bg-red-500' :
+                                     'bg-blue-500'
+                                }`} />
+                                <div>
+                                    <div className="text-white font-bold text-sm mb-1">{rec.title}</div>
+                                    <div className="text-slate-400 text-xs leading-relaxed">{rec.desc}</div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Task Distribution (Visual Bar) */}
+                <div className="space-y-4">
+                    <h3 className="text-white font-bold text-lg flex items-center gap-2">
+                        <PieChart className="w-5 h-5 text-blue-400" />
+                        Task Distribution
+                    </h3>
+                    <Card className="h-full flex flex-col justify-center gap-6">
+                        <div className="space-y-2">
+                            <div className="flex justify-between text-xs text-slate-400">
+                                <span>On Time ({totalOnTime})</span>
+                                <span>{totalTasks > 0 ? Math.round((totalOnTime/totalTasks)*100) : 0}%</span>
+                            </div>
+                            <div className="w-full h-3 bg-slate-700 rounded-full overflow-hidden">
+                                <div className="bg-emerald-500 h-full" style={{width: `${totalTasks > 0 ? (totalOnTime/totalTasks)*100 : 0}%`}}></div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <div className="flex justify-between text-xs text-slate-400">
+                                <span>Late ({totalLate})</span>
+                                <span>{totalTasks > 0 ? Math.round((totalLate/totalTasks)*100) : 0}%</span>
+                            </div>
+                            <div className="w-full h-3 bg-slate-700 rounded-full overflow-hidden">
+                                <div className="bg-yellow-500 h-full" style={{width: `${totalTasks > 0 ? (totalLate/totalTasks)*100 : 0}%`}}></div>
+                            </div>
+                        </div>
+
+                         <div className="space-y-2">
+                            <div className="flex justify-between text-xs text-slate-400">
+                                <span>Skipped / Missed ({totalMissed})</span>
+                                <span>{totalTasks > 0 ? Math.round((totalMissed/totalTasks)*100) : 0}%</span>
+                            </div>
+                            <div className="w-full h-3 bg-slate-700 rounded-full overflow-hidden">
+                                <div className="bg-red-500 h-full" style={{width: `${totalTasks > 0 ? (totalMissed/totalTasks)*100 : 0}%`}}></div>
+                            </div>
+                        </div>
+                    </Card>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // --- VIEW: ADMIN USER DETAIL (RESTORED & IMPROVED) ---
 
 const AdminUserDetail = ({ user, onClose, logs, ranks }) => {
