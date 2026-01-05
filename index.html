@@ -1,13 +1,14 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Trophy, Flame, Clock, Users, Target, Zap, LayoutDashboard, 
   CalendarCheck, ChevronRight, PlusCircle, History, LogOut, 
   Lock, BarChart3, Search, X, TrendingUp, AlertCircle, 
   CheckCircle2, Settings, UserPlus, Trash2, Calendar, User,
-  ChevronLeft, PieChart, ArrowUpRight, Lightbulb, Medal, Key
+  ChevronLeft, PieChart, ArrowUpRight, Lightbulb, Medal, Key,
+  Edit2, Save
 } from 'lucide-react';
 
-// --- CONFIGURATION ---
+// --- CONFIGURATION & DUMMY DATA ---
 
 const INITIAL_SETTINGS = {
   period: { start: '2024-07-01', end: '2024-12-31', name: 'Season 1' },
@@ -21,13 +22,12 @@ const INITIAL_SETTINGS = {
   }
 };
 
-// LEVELING SYSTEM
-const RANK_SYSTEM = [
-  { min: 0, title: 'Newbie Creator', color: 'text-slate-400', icon: '🌱' },
-  { min: 500, title: 'Anak CC', color: 'text-blue-400', icon: '👶' },
-  { min: 1200, title: 'Anak Konten Banget', color: 'text-fuchsia-400', icon: '😎' },
-  { min: 2500, title: 'Sepuh Divisi', color: 'text-yellow-400', icon: '👴' },
-  { min: 5000, title: 'Dewa Algoritma', color: 'text-emerald-400', icon: '👑' }
+const INITIAL_RANKS = [
+  { id: 1, min: 0, title: 'Newbie Creator', color: 'text-slate-400', icon: '🌱', border: 'border-slate-500' },
+  { id: 2, min: 500, title: 'Anak CC', color: 'text-blue-400', icon: '👶', border: 'border-blue-500' },
+  { id: 3, min: 1200, title: 'Anak Konten', color: 'text-fuchsia-400', icon: '😎', border: 'border-fuchsia-500' },
+  { id: 4, min: 2500, title: 'Sepuh Divisi', color: 'text-yellow-400', icon: '👴', border: 'border-yellow-500' },
+  { id: 5, min: 5000, title: 'Dewa Algoritma', color: 'text-emerald-400', icon: '👑', border: 'border-emerald-500' }
 ];
 
 const INITIAL_USERS = [
@@ -35,11 +35,11 @@ const INITIAL_USERS = [
     id: 1,
     name: "Alya Kreatif",
     role: "Video Editor",
-    password: "123", // PIN Login
+    password: "123",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Alya",
-    xp: 2450,
+    xp: 2850,
     streak: 5,
-    stats: { onTime: 20, late: 2, assist: 5, viral: 3, skip: 1 }
+    stats: { onTime: 24, late: 2, assist: 5, viral: 4, skip: 1 }
   },
   {
     id: 2,
@@ -47,9 +47,9 @@ const INITIAL_USERS = [
     role: "Copywriter",
     password: "123",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Budi",
-    xp: 2300,
-    streak: 2,
-    stats: { onTime: 18, late: 3, assist: 8, viral: 5, skip: 0 }
+    xp: 2600,
+    streak: 3,
+    stats: { onTime: 20, late: 3, assist: 10, viral: 6, skip: 0 }
   },
   {
     id: 3,
@@ -57,7 +57,7 @@ const INITIAL_USERS = [
     role: "Graphic Designer",
     password: "123",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Citra",
-    xp: 600, // Level Anak CC
+    xp: 900,
     streak: 8,
     stats: { onTime: 22, late: 0, assist: 2, viral: 1, skip: 0 }
   },
@@ -77,9 +77,29 @@ const INITIAL_USERS = [
     role: "Admin",
     password: "123",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Eka",
-    xp: 350, // Level Newbie
+    xp: 450,
     streak: 1,
     stats: { onTime: 14, late: 2, assist: 3, viral: 2, skip: 1 }
+  },
+  {
+    id: 6,
+    name: "Fajar Live",
+    role: "Live Streamer",
+    password: "123",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Fajar",
+    xp: 1250,
+    streak: 4,
+    stats: { onTime: 10, late: 1, assist: 0, viral: 3, skip: 0 }
+  },
+  {
+    id: 7,
+    name: "Gita Host",
+    role: "Talent / Host",
+    password: "123",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Gita",
+    xp: 2100,
+    streak: 2,
+    stats: { onTime: 18, late: 0, assist: 12, viral: 2, skip: 0 }
   }
 ];
 
@@ -87,17 +107,23 @@ const INITIAL_LOGS = [
   { id: 101, userId: 1, userName: "Alya Kreatif", action: "Konten Tepat Waktu", xp: 100, type: "positive", date: "2024-10-25" },
   { id: 102, userId: 2, userName: "Budi Content", action: "Konten FYP / Viral", xp: 150, type: "special", date: "2024-10-24" },
   { id: 103, userId: 4, userName: "Dimas Reel", action: "Tidak Mengerjakan", xp: 0, type: "negative", date: "2024-10-23" },
+  { id: 104, userId: 3, userName: "Citra Design", action: "Konten Tepat Waktu", xp: 100, type: "positive", date: "2024-10-22" },
+  { id: 105, userId: 7, userName: "Gita Host", action: "Bantu Teman (Assist)", xp: 20, type: "bonus", date: "2024-10-22" },
+  { id: 106, userId: 6, userName: "Fajar Live", action: "Konten FYP / Viral", xp: 150, type: "special", date: "2024-10-21" },
+  { id: 107, userId: 1, userName: "Alya Kreatif", action: "Jobdesk Tambahan", xp: 30, type: "bonus", date: "2024-10-20" },
 ];
 
 // --- HELPER ---
-const getRankInfo = (xp) => {
-    let currentRank = RANK_SYSTEM[0];
-    let nextRank = RANK_SYSTEM[RANK_SYSTEM.length - 1]; // Max level fallback
+const getRankInfo = (xp, ranks) => {
+    // Sort ranks by min XP to ensure correct order
+    const sortedRanks = [...ranks].sort((a, b) => a.min - b.min);
+    let currentRank = sortedRanks[0];
+    let nextRank = null;
 
-    for (let i = 0; i < RANK_SYSTEM.length; i++) {
-        if (xp >= RANK_SYSTEM[i].min) {
-            currentRank = RANK_SYSTEM[i];
-            nextRank = RANK_SYSTEM[i + 1] || null;
+    for (let i = 0; i < sortedRanks.length; i++) {
+        if (xp >= sortedRanks[i].min) {
+            currentRank = sortedRanks[i];
+            nextRank = sortedRanks[i + 1] || null;
         }
     }
     return { current: currentRank, next: nextRank };
@@ -122,34 +148,34 @@ const UserAvatar = ({ url, size = "md", border = true }) => {
 
 // --- VIEW: PUBLIC DASHBOARD ---
 
-const PublicDashboard = ({ users, activityLog, settings }) => {
+const PublicDashboard = ({ users, activityLog, settings, ranks }) => {
   const sortedUsers = [...users].sort((a, b) => b.xp - a.xp);
   const topThree = sortedUsers.slice(0, 3);
   
   const mostDisciplined = [...users].sort((a, b) => b.stats.onTime - a.stats.onTime)[0];
   const mostHelpful = [...users].sort((a, b) => b.stats.assist - a.stats.assist)[0];
   const mostViral = [...users].sort((a, b) => b.stats.viral - a.stats.viral)[0];
-  const publicLog = activityLog.filter(log => log.xp > 0);
+  const publicLog = activityLog.filter(log => log.xp > 0); // Hide negative logs from public
 
   return (
-    <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-8 animate-fade-in pb-20">
-      <div className="text-center border-b border-white/10 pb-6">
+    <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-12 animate-fade-in pb-24">
+      <div className="text-center pt-4 md:pt-0">
            <h1 className="text-4xl md:text-6xl font-black text-white mb-2 tracking-tighter">
             CREATOR <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-400">LEAGUE</span>
           </h1>
-          <p className="text-slate-400 font-medium tracking-wide flex items-center justify-center gap-2 uppercase text-sm">
+          <p className="text-slate-400 font-medium tracking-wide flex items-center justify-center gap-2 uppercase text-xs md:text-sm">
             {settings.period.name} • {settings.period.start} - {settings.period.end}
           </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-8 space-y-8">
-          {/* PODIUM */}
-          <div className="relative min-h-[380px] flex justify-center items-end gap-4">
+          {/* PODIUM - Added margin top to prevent overlap */}
+          <div className="relative min-h-[380px] flex justify-center items-end gap-2 md:gap-4 mt-8 md:mt-12">
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-violet-500/10 blur-[100px] rounded-full -z-10" />
 
             {/* Rank 2 */}
-            <div className="flex flex-col items-center relative w-1/3 group">
+            <div className="flex flex-col items-center relative w-[30%] group">
               <div className="relative">
                  <UserAvatar url={topThree[1]?.avatar} size="lg" />
                  <div className="absolute -bottom-2 -right-2 bg-slate-800 rounded-full p-1 border border-slate-600">
@@ -158,13 +184,13 @@ const PublicDashboard = ({ users, activityLog, settings }) => {
               </div>
               <div className="mt-4 w-full h-44 bg-gradient-to-t from-slate-800 to-slate-700/30 rounded-t-3xl flex flex-col items-center justify-end p-4 border-t border-white/10 relative overflow-hidden">
                  <div className="absolute top-0 left-0 w-full h-1 bg-slate-400 shadow-[0_0_20px_rgba(148,163,184,0.4)]"></div>
-                 <span className="text-white font-bold text-lg text-center truncate w-full">{topThree[1]?.name}</span>
-                 <span className="text-slate-400 text-sm font-mono mt-1">{topThree[1]?.xp} XP</span>
+                 <span className="text-white font-bold text-sm md:text-lg text-center truncate w-full">{topThree[1]?.name}</span>
+                 <span className="text-slate-400 text-xs md:text-sm font-mono mt-1">{topThree[1]?.xp} XP</span>
               </div>
             </div>
 
             {/* Rank 1 */}
-            <div className="flex flex-col items-center relative z-10 w-1/3 group">
+            <div className="flex flex-col items-center relative z-10 w-[35%] group -mt-10">
               <div className="relative scale-110">
                 <Trophy className="w-14 h-14 text-yellow-400 absolute -top-16 left-1/2 -translate-x-1/2 drop-shadow-[0_0_20px_rgba(250,204,21,0.6)] animate-bounce" />
                 <UserAvatar url={topThree[0]?.avatar} size="xl" />
@@ -174,13 +200,14 @@ const PublicDashboard = ({ users, activityLog, settings }) => {
               </div>
               <div className="mt-6 w-full h-64 bg-gradient-to-t from-violet-900/80 to-fuchsia-900/40 rounded-t-3xl flex flex-col items-center justify-end p-4 border-t border-white/10 relative overflow-hidden backdrop-blur-sm shadow-2xl shadow-fuchsia-900/20">
                  <div className="absolute top-0 left-0 w-full h-1 bg-yellow-400 shadow-[0_0_30px_rgba(250,204,21,0.8)]"></div>
-                 <span className="text-white font-bold text-2xl text-center truncate w-full tracking-tight">{topThree[0]?.name}</span>
-                 <span className="text-fuchsia-200 text-3xl font-mono font-black mt-2">{topThree[0]?.xp} XP</span>
+                 <span className="text-white font-bold text-lg md:text-2xl text-center truncate w-full tracking-tight">{topThree[0]?.name}</span>
+                 <span className="text-fuchsia-200 text-2xl md:text-3xl font-mono font-black mt-2">{topThree[0]?.xp} XP</span>
+                 <div className="mt-2 text-[10px] md:text-xs text-fuchsia-300 uppercase tracking-widest font-bold bg-fuchsia-500/20 px-2 py-1 rounded">Champion</div>
               </div>
             </div>
 
             {/* Rank 3 */}
-            <div className="flex flex-col items-center relative w-1/3 group">
+            <div className="flex flex-col items-center relative w-[30%] group">
               <div className="relative">
                 <UserAvatar url={topThree[2]?.avatar} size="lg" />
                 <div className="absolute -bottom-2 -right-2 bg-slate-800 rounded-full p-1 border border-orange-800">
@@ -189,8 +216,8 @@ const PublicDashboard = ({ users, activityLog, settings }) => {
               </div>
               <div className="mt-4 w-full h-36 bg-gradient-to-t from-slate-800 to-slate-700/30 rounded-t-3xl flex flex-col items-center justify-end p-4 border-t border-white/10 relative overflow-hidden">
                  <div className="absolute top-0 left-0 w-full h-1 bg-orange-700 shadow-[0_0_20px_rgba(194,65,12,0.4)]"></div>
-                 <span className="text-white font-bold text-lg text-center truncate w-full">{topThree[2]?.name}</span>
-                 <span className="text-slate-400 text-sm font-mono mt-1">{topThree[2]?.xp} XP</span>
+                 <span className="text-white font-bold text-sm md:text-lg text-center truncate w-full">{topThree[2]?.name}</span>
+                 <span className="text-slate-400 text-xs md:text-sm font-mono mt-1">{topThree[2]?.xp} XP</span>
               </div>
             </div>
           </div>
@@ -229,8 +256,8 @@ const PublicDashboard = ({ users, activityLog, settings }) => {
                     {publicLog.length === 0 ? (
                         <div className="text-slate-500 text-center text-sm py-10">Belum ada aktivitas.</div>
                     ) : (
-                        publicLog.slice(0, 10).map((log) => (
-                            <div key={log.id} className="flex gap-3 items-start p-3 rounded-xl bg-slate-800/40 border border-white/5 animate-fade-in">
+                        publicLog.slice(0, 15).map((log) => (
+                            <div key={log.id} className="flex gap-3 items-start p-3 rounded-xl bg-slate-800/40 border border-white/5 animate-fade-in hover:bg-slate-800/60 transition-colors">
                                 <div className={`mt-1.5 w-2 h-2 rounded-full shrink-0 
                                     ${log.type === 'positive' ? 'bg-emerald-400' 
                                     : log.type === 'warning' ? 'bg-yellow-400' 
@@ -261,15 +288,14 @@ const PublicDashboard = ({ users, activityLog, settings }) => {
 
 // --- VIEW: USER DASHBOARD (PERSONAL) ---
 
-const UserDashboard = ({ user, allUsers, logs }) => {
+const UserDashboard = ({ user, allUsers, logs, ranks }) => {
   const sortedUsers = [...allUsers].sort((a, b) => b.xp - a.xp);
   const myRank = sortedUsers.findIndex(u => u.id === user.id) + 1;
   const userAbove = myRank > 1 ? sortedUsers[myRank - 2] : null;
   const xpToNext = userAbove ? userAbove.xp - user.xp : 0;
   const myLogs = logs.filter(l => l.userId === user.id);
   
-  // Rank Badge Logic
-  const { current: rankInfo, next: nextRankInfo } = getRankInfo(user.xp);
+  const { current: rankInfo, next: nextRankInfo } = getRankInfo(user.xp, ranks);
 
   return (
       <div className="max-w-4xl mx-auto p-4 md:p-8 animate-fade-in pb-20">
@@ -315,18 +341,6 @@ const UserDashboard = ({ user, allUsers, logs }) => {
                         className="bg-gradient-to-r from-blue-500 to-fuchsia-500 h-full rounded-full transition-all duration-1000" 
                         style={{ width: `${Math.min(100, (user.xp / nextRankInfo.min) * 100)}%` }}
                       ></div>
-                  </div>
-              </div>
-          )}
-
-          {/* Motivation Bar (User above) */}
-          {userAbove && (
-              <div className="mb-8 p-4 bg-slate-900/50 rounded-xl border border-white/5 flex items-center justify-between">
-                  <div className="text-sm text-slate-400">
-                    Overtake <strong className="text-white">{userAbove.name}</strong> to reach Rank #{myRank - 1}
-                  </div>
-                  <div className="text-fuchsia-400 font-bold text-sm bg-fuchsia-500/10 px-3 py-1 rounded-lg border border-fuchsia-500/20">
-                    Needs {xpToNext} XP more!
                   </div>
               </div>
           )}
@@ -378,159 +392,129 @@ const UserDashboard = ({ user, allUsers, logs }) => {
   )
 };
 
-// --- VIEW: ADMIN STATISTICS (NEW) ---
+// --- VIEW: ADMIN USER DETAIL (RESTORED & IMPROVED) ---
 
-const AdminStatistics = ({ users, settings }) => {
-    // 1. Calculate Core Metrics
-    const totalXP = users.reduce((acc, u) => acc + u.xp, 0);
-    const totalOnTime = users.reduce((acc, u) => acc + u.stats.onTime, 0);
-    const totalLate = users.reduce((acc, u) => acc + u.stats.late, 0);
-    const totalViral = users.reduce((acc, u) => acc + u.stats.viral, 0);
-    const totalMissed = users.reduce((acc, u) => acc + u.stats.skip, 0);
-    
-    const totalTasks = totalOnTime + totalLate + totalMissed;
-    const consistencyRate = totalTasks > 0 ? Math.round((totalOnTime / totalTasks) * 100) : 0;
-    const viralRatio = totalTasks > 0 ? ((totalViral / totalTasks) * 100).toFixed(1) : 0;
-
-    // 2. Generate Recommendations (Simple Logic)
-    const recommendations = [];
-    
-    if (consistencyRate < 70) {
-        recommendations.push({ title: "Disiplin Rendah", desc: "Rata-rata On-Time di bawah 70%. Coba evaluasi beban kerja tim atau adakan sesi manajemen waktu.", type: "warning" });
-    } else {
-        recommendations.push({ title: "Konsistensi Bagus", desc: "Tim menjaga ritme kerja yang baik. Pertahankan momentum ini dengan reward kecil.", type: "positive" });
-    }
-
-    if (totalViral < 5) {
-        recommendations.push({ title: "Impact Belum Terasa", desc: "Angka FYP masih rendah. Sarankan brainstorming ide konten yang lebih relevan/trending.", type: "info" });
-    }
-
-    const strugglingUsers = users.filter(u => {
-        const t = u.stats.onTime + u.stats.late + u.stats.skip;
-        return t > 0 && (u.stats.onTime / t) < 0.5;
-    });
-
-    if (strugglingUsers.length > 0) {
-        recommendations.push({ 
-            title: "Butuh Perhatian Khusus", 
-            desc: `${strugglingUsers.map(u => u.name).join(", ")} memiliki tingkat keterlambatan tinggi. Lakukan 1-on-1 coaching.`, 
-            type: "urgent" 
-        });
-    }
+const AdminUserDetail = ({ user, onClose, logs, ranks }) => {
+    const totalTasks = user.stats.onTime + user.stats.late + user.stats.skip;
+    const consistencyRate = totalTasks > 0 ? Math.round((user.stats.onTime / totalTasks) * 100) : 0;
+    const userLogs = logs.filter(l => l.userId === user.id);
+    const rankInfo = getRankInfo(user.xp, ranks).current;
 
     return (
-        <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
-            <h2 className="text-2xl font-bold text-white mb-6">Analisis & Statistik Divisi</h2>
+        <div className="max-w-4xl mx-auto space-y-6 animate-fade-in p-4 md:p-0">
+            <button onClick={onClose} className="flex items-center text-slate-400 hover:text-white gap-2 text-sm font-medium transition-colors">
+                <ChevronLeft className="w-4 h-4" /> Kembali ke List User
+            </button>
 
-            {/* Top Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Card className="bg-slate-800/50">
-                    <div className="text-slate-400 text-xs uppercase font-bold mb-1">Productivity</div>
-                    <div className="text-2xl font-bold text-white">{totalXP} <span className="text-sm font-normal text-slate-500">XP</span></div>
-                </Card>
-                <Card className="bg-slate-800/50">
-                    <div className="text-slate-400 text-xs uppercase font-bold mb-1">Consistency Rate</div>
-                    <div className={`text-2xl font-bold ${consistencyRate > 80 ? 'text-emerald-400' : 'text-yellow-400'}`}>{consistencyRate}%</div>
-                </Card>
-                <Card className="bg-slate-800/50">
-                    <div className="text-slate-400 text-xs uppercase font-bold mb-1">Viral Ratio</div>
-                    <div className="text-2xl font-bold text-fuchsia-400">{viralRatio}%</div>
-                </Card>
-                <Card className="bg-slate-800/50">
-                    <div className="text-slate-400 text-xs uppercase font-bold mb-1">Total Missed</div>
-                    <div className="text-2xl font-bold text-red-400">{totalMissed} <span className="text-sm font-normal text-slate-500">Tasks</span></div>
-                </Card>
+            <div className="bg-slate-800/50 border border-white/10 rounded-2xl p-6 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-fuchsia-500/10 blur-[80px] pointer-events-none" />
+                <div className="flex flex-col md:flex-row gap-6 items-start relative z-10">
+                    <UserAvatar url={user.avatar} size="2xl" />
+                    <div className="flex-1 w-full">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <h2 className="text-2xl font-bold text-white">{user.name}</h2>
+                                <p className="text-slate-400 mb-2">{user.role}</p>
+                                <span className={`text-xs border px-2 py-0.5 rounded-full ${rankInfo.color} ${rankInfo.border}`}>
+                                    {rankInfo.icon} {rankInfo.title}
+                                </span>
+                            </div>
+                            <div className="text-right">
+                                <div className="text-3xl font-mono font-bold text-fuchsia-400">{user.xp} <span className="text-sm text-slate-500">XP</span></div>
+                                <div className="text-xs text-slate-500">Total Accumulation</div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                             <div className="p-3 bg-slate-900 rounded-xl border border-white/5">
+                                <div className="text-xs text-slate-400 uppercase">On Time</div>
+                                <div className="text-xl font-bold text-emerald-400">{user.stats.onTime}x</div>
+                            </div>
+                            <div className="p-3 bg-slate-900 rounded-xl border border-white/5">
+                                <div className="text-xs text-slate-400 uppercase">Late</div>
+                                <div className="text-xl font-bold text-yellow-400">{user.stats.late}x</div>
+                            </div>
+                             <div className="p-3 bg-slate-900 rounded-xl border border-white/5">
+                                <div className="text-xs text-slate-400 uppercase">Missed</div>
+                                <div className="text-xl font-bold text-red-400">{user.stats.skip}x</div>
+                            </div>
+                             <div className="p-3 bg-slate-900 rounded-xl border border-white/5">
+                                <div className="text-xs text-slate-400 uppercase">Viral Count</div>
+                                <div className="text-xl font-bold text-fuchsia-400">{user.stats.viral}x</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Recommendations Section */}
-                <div className="space-y-4">
-                    <h3 className="text-white font-bold text-lg flex items-center gap-2">
-                        <Lightbulb className="w-5 h-5 text-yellow-400" />
-                        AI Insights & Recommendations
+                <div className="bg-slate-800/30 border border-white/10 rounded-xl p-4">
+                    <h3 className="text-white font-bold mb-4 flex items-center gap-2">
+                        <History className="w-4 h-4 text-slate-400" /> Riwayat Lengkap
                     </h3>
-                    <div className="space-y-3">
-                        {recommendations.map((rec, idx) => (
-                            <div key={idx} className={`p-4 rounded-xl border flex gap-3 ${
-                                rec.type === 'warning' ? 'bg-orange-500/10 border-orange-500/20' : 
-                                rec.type === 'positive' ? 'bg-emerald-500/10 border-emerald-500/20' : 
-                                rec.type === 'urgent' ? 'bg-red-500/10 border-red-500/20' :
-                                'bg-blue-500/10 border-blue-500/20'
-                            }`}>
-                                <div className={`mt-1 w-2 h-2 rounded-full shrink-0 ${
-                                     rec.type === 'warning' ? 'bg-orange-500' : 
-                                     rec.type === 'positive' ? 'bg-emerald-500' : 
-                                     rec.type === 'urgent' ? 'bg-red-500' :
-                                     'bg-blue-500'
-                                }`} />
+                    <div className="max-h-[400px] overflow-y-auto custom-scrollbar space-y-2">
+                        {userLogs.length === 0 ? <p className="text-slate-500 text-sm">Belum ada aktivitas.</p> : userLogs.map(log => (
+                             <div key={log.id} className="p-3 bg-slate-900/50 rounded-lg flex justify-between items-center border border-white/5">
                                 <div>
-                                    <div className="text-white font-bold text-sm mb-1">{rec.title}</div>
-                                    <div className="text-slate-400 text-xs leading-relaxed">{rec.desc}</div>
+                                    <div className={`text-sm font-medium ${log.xp === 0 ? 'text-red-400' : 'text-slate-200'}`}>
+                                        {log.action}
+                                    </div>
+                                    <div className="text-[10px] text-slate-500">{log.date}</div>
                                 </div>
-                            </div>
+                                <span className={`text-xs font-mono font-bold ${log.xp > 0 ? 'text-emerald-400' : 'text-slate-500'}`}>
+                                    {log.xp > 0 ? `+${log.xp}` : '0'} XP
+                                </span>
+                             </div>
                         ))}
                     </div>
                 </div>
-
-                {/* Task Distribution (Visual Bar) */}
-                <div className="space-y-4">
-                    <h3 className="text-white font-bold text-lg flex items-center gap-2">
-                        <PieChart className="w-5 h-5 text-blue-400" />
-                        Task Distribution
-                    </h3>
-                    <Card className="h-full flex flex-col justify-center gap-6">
-                        <div className="space-y-2">
-                            <div className="flex justify-between text-xs text-slate-400">
-                                <span>On Time ({totalOnTime})</span>
-                                <span>{Math.round((totalOnTime/totalTasks)*100)}%</span>
+                
+                <div className="space-y-6">
+                     <div className="bg-slate-800/30 border border-white/10 rounded-xl p-6">
+                        <h3 className="text-white font-bold mb-4">Analisa Performa</h3>
+                        <div className="space-y-4">
+                            <div>
+                                <div className="flex justify-between text-sm mb-1">
+                                    <span className="text-slate-400">Consistency Rate</span>
+                                    <span className={consistencyRate > 80 ? "text-emerald-400" : "text-yellow-400"}>{consistencyRate}%</span>
+                                </div>
+                                <div className="w-full bg-slate-900 rounded-full h-2">
+                                    <div className={`h-full rounded-full ${consistencyRate > 80 ? "bg-emerald-500" : "bg-yellow-500"}`} style={{ width: `${consistencyRate}%` }}></div>
+                                </div>
                             </div>
-                            <div className="w-full h-3 bg-slate-700 rounded-full overflow-hidden">
-                                <div className="bg-emerald-500 h-full" style={{width: `${(totalOnTime/totalTasks)*100}%`}}></div>
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <div className="flex justify-between text-xs text-slate-400">
-                                <span>Late ({totalLate})</span>
-                                <span>{Math.round((totalLate/totalTasks)*100)}%</span>
-                            </div>
-                            <div className="w-full h-3 bg-slate-700 rounded-full overflow-hidden">
-                                <div className="bg-yellow-500 h-full" style={{width: `${(totalLate/totalTasks)*100}%`}}></div>
+                            <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg text-xs text-blue-200 leading-relaxed">
+                                <strong className="block mb-1 text-blue-400">Rekomendasi Manajer:</strong>
+                                {consistencyRate < 70 
+                                    ? "User ini perlu sesi 1-on-1 untuk membahas manajemen waktu." 
+                                    : "Pertahankan performa! User ini kandidat kuat untuk Employee of the Month."}
                             </div>
                         </div>
-
-                         <div className="space-y-2">
-                            <div className="flex justify-between text-xs text-slate-400">
-                                <span>Skipped / Missed ({totalMissed})</span>
-                                <span>{Math.round((totalMissed/totalTasks)*100)}%</span>
-                            </div>
-                            <div className="w-full h-3 bg-slate-700 rounded-full overflow-hidden">
-                                <div className="bg-red-500 h-full" style={{width: `${(totalMissed/totalTasks)*100}%`}}></div>
-                            </div>
-                        </div>
-                    </Card>
+                    </div>
                 </div>
             </div>
         </div>
     );
-};
+}
 
-// --- VIEW: ADMIN PANEL (COMPREHENSIVE) ---
+// --- VIEW: ADMIN PANEL ---
 
-const AdminPanel = ({ users, settings, setSettings, onUpdateUsers, onAddLog, activityLog }) => {
+const AdminPanel = ({ users, settings, setSettings, onUpdateUsers, onAddLog, activityLog, ranks, setRanks }) => {
   const [activeTab, setActiveTab] = useState('input'); 
   const [selectedUser, setSelectedUser] = useState('');
-  
-  // State for adding user
+  const [detailUser, setDetailUser] = useState(null); // State untuk detail user
+
+  // Config State
   const [isAddingUser, setIsAddingUser] = useState(false);
   const [newUserForm, setNewUserForm] = useState({ name: '', role: '', password: '' });
+  
+  // Rank Edit State
+  const [editingRank, setEditingRank] = useState(null);
 
   const handleAddPoint = (typeKey) => {
     if (!selectedUser) return;
     const userToUpdate = users.find(u => u.id === parseInt(selectedUser));
     const config = settings.activities[typeKey];
     
-    // Update Stats logic
     const updatedUser = { ...userToUpdate, xp: userToUpdate.xp + config.xp };
     if (typeKey === 'ontime') { updatedUser.streak += 1; updatedUser.stats.onTime += 1; }
     if (typeKey === 'late') { updatedUser.stats.late += 1; }
@@ -558,56 +542,58 @@ const AdminPanel = ({ users, settings, setSettings, onUpdateUsers, onAddLog, act
   const handleCreateUser = (e) => {
     e.preventDefault();
     if(!newUserForm.name || !newUserForm.role || !newUserForm.password) return;
-
     const newUser = {
         id: Date.now(),
         name: newUserForm.name,
         role: newUserForm.role,
         password: newUserForm.password,
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${newUserForm.name}`,
-        xp: 0,
-        streak: 0,
+        xp: 0, streak: 0,
         stats: { onTime: 0, late: 0, assist: 0, viral: 0, skip: 0 }
     };
-
     onUpdateUsers([...users, newUser]);
     setIsAddingUser(false);
     setNewUserForm({ name: '', role: '', password: '' });
   };
 
   const handleDeleteUser = (id) => {
-    if(window.confirm('Yakin hapus user ini?')) {
-        onUpdateUsers(users.filter(u => u.id !== id));
-    }
+    if(window.confirm('Yakin hapus user ini?')) onUpdateUsers(users.filter(u => u.id !== id));
+  };
+  
+  const handleUpdateRank = (rankId, field, value) => {
+      setRanks(ranks.map(r => r.id === rankId ? { ...r, [field]: value } : r));
   };
 
+  // IF VIEWING DETAIL
+  if (detailUser) {
+      return <AdminUserDetail user={detailUser} logs={activityLog} ranks={ranks} onClose={() => setDetailUser(null)} />;
+  }
+
   return (
-    <div className="flex min-h-[calc(100vh-64px)]">
-      {/* SIDEBAR */}
-      <aside className="w-64 bg-slate-900 border-r border-white/5 p-6 hidden md:flex flex-col">
-         <div className="space-y-2 flex-1">
-            <button onClick={() => setActiveTab('input')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'input' ? 'bg-fuchsia-600 text-white font-bold' : 'text-slate-400 hover:bg-slate-800'}`}>
-                <LayoutDashboard className="w-5 h-5" /> Input Poin
-            </button>
-            <button onClick={() => setActiveTab('stats')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'stats' ? 'bg-fuchsia-600 text-white font-bold' : 'text-slate-400 hover:bg-slate-800'}`}>
-                <BarChart3 className="w-5 h-5" /> Statistics
-            </button>
-            <button onClick={() => setActiveTab('users')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'users' ? 'bg-fuchsia-600 text-white font-bold' : 'text-slate-400 hover:bg-slate-800'}`}>
-                <Users className="w-5 h-5" /> Manage Users
-            </button>
-            <button onClick={() => setActiveTab('settings')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'settings' ? 'bg-fuchsia-600 text-white font-bold' : 'text-slate-400 hover:bg-slate-800'}`}>
-                <Settings className="w-5 h-5" /> Settings
-            </button>
-         </div>
+    <div className="flex flex-col md:flex-row min-h-[calc(100vh-64px)]">
+      {/* SIDEBAR (Responsive: Top on mobile, Side on desktop) */}
+      <aside className="w-full md:w-64 bg-slate-900 border-b md:border-b-0 md:border-r border-white/5 p-4 md:p-6 flex md:flex-col gap-2 overflow-x-auto">
+         <button onClick={() => setActiveTab('input')} className={`flex-shrink-0 flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 rounded-xl transition-all text-sm md:text-base ${activeTab === 'input' ? 'bg-fuchsia-600 text-white font-bold' : 'text-slate-400 hover:bg-slate-800'}`}>
+            <LayoutDashboard className="w-4 h-4 md:w-5 md:h-5" /> <span className="hidden md:inline">Input Poin</span> <span className="md:hidden">Input</span>
+         </button>
+         <button onClick={() => setActiveTab('stats')} className={`flex-shrink-0 flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 rounded-xl transition-all text-sm md:text-base ${activeTab === 'stats' ? 'bg-fuchsia-600 text-white font-bold' : 'text-slate-400 hover:bg-slate-800'}`}>
+            <BarChart3 className="w-4 h-4 md:w-5 md:h-5" /> <span className="hidden md:inline">Statistics</span> <span className="md:hidden">Stats</span>
+         </button>
+         <button onClick={() => setActiveTab('users')} className={`flex-shrink-0 flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 rounded-xl transition-all text-sm md:text-base ${activeTab === 'users' ? 'bg-fuchsia-600 text-white font-bold' : 'text-slate-400 hover:bg-slate-800'}`}>
+            <Users className="w-4 h-4 md:w-5 md:h-5" /> <span className="hidden md:inline">Manage Users</span> <span className="md:hidden">Users</span>
+         </button>
+         <button onClick={() => setActiveTab('settings')} className={`flex-shrink-0 flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 rounded-xl transition-all text-sm md:text-base ${activeTab === 'settings' ? 'bg-fuchsia-600 text-white font-bold' : 'text-slate-400 hover:bg-slate-800'}`}>
+            <Settings className="w-4 h-4 md:w-5 md:h-5" /> <span className="hidden md:inline">Settings</span> <span className="md:hidden">Config</span>
+         </button>
       </aside>
 
-      {/* CONTENT */}
-      <div className="flex-1 p-8 overflow-y-auto">
+      {/* CONTENT AREA */}
+      <div className="flex-1 p-4 md:p-8 overflow-y-auto">
         
         {activeTab === 'input' && (
             <div className="max-w-3xl mx-auto space-y-8 animate-fade-in">
-                <h2 className="text-2xl font-bold text-white">Input Aktivitas Harian</h2>
-                <Card className="p-8">
+                <h2 className="text-xl md:text-2xl font-bold text-white">Input Aktivitas Harian</h2>
+                <Card className="p-6 md:p-8">
                      <div className="space-y-6">
                         <div>
                             <label className="block text-sm font-medium text-slate-300 mb-2">Pilih Kreator</label>
@@ -645,35 +631,32 @@ const AdminPanel = ({ users, settings, setSettings, onUpdateUsers, onAddLog, act
 
         {activeTab === 'users' && (
              <div className="space-y-6 animate-fade-in">
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <h2 className="text-2xl font-bold text-white">Manage Users</h2>
-                    <button 
-                        onClick={() => setIsAddingUser(true)}
-                        className="bg-fuchsia-600 hover:bg-fuchsia-500 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2"
-                    >
+                    <button onClick={() => setIsAddingUser(true)} className="bg-fuchsia-600 hover:bg-fuchsia-500 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 text-sm w-full md:w-auto justify-center">
                         <UserPlus className="w-4 h-4" /> Add User
                     </button>
                 </div>
                 
-                <div className="bg-slate-800/30 border border-white/5 rounded-xl overflow-hidden">
-                    <table className="w-full text-left">
+                <div className="bg-slate-800/30 border border-white/5 rounded-xl overflow-hidden overflow-x-auto">
+                    <table className="w-full text-left min-w-[600px]">
                         <thead className="bg-slate-900 text-slate-400 text-xs uppercase font-bold">
                             <tr>
                                 <th className="p-4">User</th>
-                                <th className="p-4 text-center">Rank</th>
-                                <th className="p-4 text-center">Total XP</th>
+                                <th className="p-4 text-center">Rank Badge</th>
+                                <th className="p-4 text-center">XP</th>
                                 <th className="p-4 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
                             {users.map(user => {
-                                const rank = getRankInfo(user.xp).current;
+                                const rank = getRankInfo(user.xp, ranks).current;
                                 return (
-                                <tr key={user.id} className="hover:bg-slate-800/50">
+                                <tr key={user.id} className="hover:bg-slate-800/50 cursor-pointer group" onClick={() => setDetailUser(user)}>
                                     <td className="p-4 flex items-center gap-3">
                                         <UserAvatar url={user.avatar} size="sm" />
                                         <div>
-                                            <div className="text-white font-medium">{user.name}</div>
+                                            <div className="text-white font-medium group-hover:text-fuchsia-400 transition-colors">{user.name}</div>
                                             <div className="text-xs text-slate-500">{user.role}</div>
                                         </div>
                                     </td>
@@ -683,8 +666,8 @@ const AdminPanel = ({ users, settings, setSettings, onUpdateUsers, onAddLog, act
                                         </span>
                                     </td>
                                     <td className="p-4 text-center text-white font-mono">{user.xp}</td>
-                                    <td className="p-4 text-right">
-                                        <button onClick={() => handleDeleteUser(user.id)} className="text-slate-500 hover:text-red-400"><Trash2 className="w-4 h-4" /></button>
+                                    <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
+                                        <button onClick={() => handleDeleteUser(user.id)} className="text-slate-500 hover:text-red-400 p-2"><Trash2 className="w-4 h-4" /></button>
                                     </td>
                                 </tr>
                             )})}
@@ -692,8 +675,7 @@ const AdminPanel = ({ users, settings, setSettings, onUpdateUsers, onAddLog, act
                     </table>
                 </div>
 
-                {/* MODAL ADD USER */}
-                {isAddingUser && (
+                 {isAddingUser && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
                         <Card className="w-full max-w-md bg-slate-900 border-slate-700">
                             <div className="flex justify-between items-center mb-6">
@@ -746,21 +728,63 @@ const AdminPanel = ({ users, settings, setSettings, onUpdateUsers, onAddLog, act
         )}
 
         {activeTab === 'settings' && (
-            <div className="max-w-2xl mx-auto space-y-8 animate-fade-in">
-                <h2 className="text-2xl font-bold text-white">System Settings</h2>
+            <div className="max-w-2xl mx-auto space-y-8 animate-fade-in pb-20">
+                <h2 className="text-2xl font-bold text-white">System Configuration</h2>
                 
                 {/* Period Settings */}
                 <div className="space-y-4 border-b border-white/10 pb-8">
                     <h3 className="text-lg font-bold text-slate-300">Pengaturan Periode</h3>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label className="text-xs text-slate-400 mb-1 block">Start Date</label>
-                            <input type="date" className="w-full bg-slate-900 border border-white/10 rounded-lg p-3 text-white outline-none focus:border-fuchsia-500" defaultValue={settings.period.start} />
+                            <input type="date" className="w-full bg-slate-900 border border-white/10 rounded-lg p-3 text-white outline-none focus:border-fuchsia-500" 
+                                value={settings.period.start} 
+                                onChange={(e) => setSettings({...settings, period: {...settings.period, start: e.target.value}})}
+                            />
                         </div>
                         <div>
                             <label className="text-xs text-slate-400 mb-1 block">End Date</label>
-                            <input type="date" className="w-full bg-slate-900 border border-white/10 rounded-lg p-3 text-white outline-none focus:border-fuchsia-500" defaultValue={settings.period.end} />
+                            <input type="date" className="w-full bg-slate-900 border border-white/10 rounded-lg p-3 text-white outline-none focus:border-fuchsia-500" 
+                                value={settings.period.end} 
+                                onChange={(e) => setSettings({...settings, period: {...settings.period, end: e.target.value}})}
+                            />
                         </div>
+                    </div>
+                </div>
+
+                 {/* Badges/Rank Settings (CRUD) */}
+                <div className="space-y-4 border-b border-white/10 pb-8">
+                    <h3 className="text-lg font-bold text-slate-300 flex items-center gap-2">
+                        <Medal className="w-5 h-5 text-yellow-400" /> Badge Levels Configuration
+                    </h3>
+                    <p className="text-sm text-slate-500 mb-4">Edit nama badge dan minimal XP untuk mencapainya.</p>
+                    
+                    <div className="space-y-3">
+                        {ranks.map((rank) => (
+                            <div key={rank.id} className="bg-slate-800/40 p-4 rounded-xl border border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center text-lg">{rank.icon}</div>
+                                    <div>
+                                        <input 
+                                            type="text" 
+                                            value={rank.title} 
+                                            onChange={(e) => handleUpdateRank(rank.id, 'title', e.target.value)}
+                                            className="bg-transparent border-b border-transparent hover:border-white/20 focus:border-fuchsia-500 outline-none text-white font-bold w-40"
+                                        />
+                                        <div className="text-xs text-slate-500">Rank ID: {rank.id}</div>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs text-slate-400">Min XP:</span>
+                                    <input 
+                                        type="number"
+                                        value={rank.min}
+                                        onChange={(e) => handleUpdateRank(rank.id, 'min', parseInt(e.target.value))}
+                                        className="w-24 bg-slate-900 border border-white/10 rounded-lg px-2 py-1 text-white text-center font-mono focus:border-fuchsia-500 outline-none"
+                                    />
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
 
@@ -778,7 +802,6 @@ const AdminPanel = ({ users, settings, setSettings, onUpdateUsers, onAddLog, act
                 </div>
             </div>
         )}
-
       </div>
     </div>
   );
@@ -787,13 +810,14 @@ const AdminPanel = ({ users, settings, setSettings, onUpdateUsers, onAddLog, act
 // --- LOGIN & APP WRAPPER ---
 
 export default function App() {
-  const [viewMode, setViewMode] = useState('public'); // 'public' | 'admin' | 'user'
+  const [viewMode, setViewMode] = useState('public'); 
   const [currentUser, setCurrentUser] = useState(null); 
   
   // GLOBAL STATE
   const [users, setUsers] = useState(INITIAL_USERS);
   const [settings, setSettings] = useState(INITIAL_SETTINGS);
   const [activityLog, setActivityLog] = useState(INITIAL_LOGS);
+  const [ranks, setRanks] = useState(INITIAL_RANKS);
 
   const handleAddLog = (newLog) => setActivityLog([newLog, ...activityLog]);
 
@@ -807,7 +831,6 @@ export default function App() {
           if (loginPass === 'admin123') setViewMode('admin');
           else alert("Password Admin Salah");
       } else {
-          // User login logic WITH PASSWORD
           const user = users.find(u => u.id === parseInt(loginUserSelect));
           if (user) {
               if(user.password === loginPass) {
@@ -820,14 +843,13 @@ export default function App() {
               alert("Pilih user dulu");
           }
       }
-      setLoginPass(''); // Clear pass
+      setLoginPass(''); 
   };
 
-  // RENDER CONTENT BASED ON MODE
   const renderContent = () => {
-      if (viewMode === 'admin') return <AdminPanel users={users} settings={settings} setSettings={setSettings} onUpdateUsers={setUsers} onAddLog={handleAddLog} activityLog={activityLog} />;
-      if (viewMode === 'user' && currentUser) return <UserDashboard user={currentUser} allUsers={users} logs={activityLog} />;
-      return <PublicDashboard users={users} activityLog={activityLog} settings={settings} />; // Default Public
+      if (viewMode === 'admin') return <AdminPanel users={users} settings={settings} setSettings={setSettings} onUpdateUsers={setUsers} onAddLog={handleAddLog} activityLog={activityLog} ranks={ranks} setRanks={setRanks} />;
+      if (viewMode === 'user' && currentUser) return <UserDashboard user={currentUser} allUsers={users} logs={activityLog} ranks={ranks} />;
+      return <PublicDashboard users={users} activityLog={activityLog} settings={settings} ranks={ranks} />; 
   };
 
   return (
@@ -846,11 +868,10 @@ export default function App() {
                 <div className="w-8 h-8 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-lg flex items-center justify-center font-bold text-white text-xs shadow-lg">CL</div>
                 <div className="hidden md:block">
                     <div className="font-bold text-white leading-none">Creator League</div>
-                    <div className="text-[10px] text-slate-400 font-mono">INTERNAL SYSTEM v3.0</div>
+                    <div className="text-[10px] text-slate-400 font-mono">INTERNAL SYSTEM v4.0</div>
                 </div>
             </div>
             
-            {/* Login / Logout Button */}
             {viewMode === 'public' ? (
                 <button 
                     onClick={() => setViewMode('login')}
@@ -863,7 +884,7 @@ export default function App() {
                     onClick={() => { setViewMode('public'); setCurrentUser(null); }}
                     className="flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-white px-3 py-1.5 bg-slate-800 rounded-lg transition-colors border border-white/5"
                 >
-                    <LogOut className="w-3 h-3" /> Logout {viewMode === 'admin' ? '(Admin)' : ''}
+                    <LogOut className="w-3 h-3" /> Logout
                 </button>
             )}
         </div>
